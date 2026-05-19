@@ -201,11 +201,11 @@ animateBg();
 
 // 抽奖逻辑不变
 let prizeArr = [
-  "陪逛街",
-  "请喝奶茶",
+  "一等奖",
+  "二等奖",
+  "三等奖",
+  "四等奖",
   "拥抱十分钟",
-  "包揽家务",
-  "红包惊喜",
   "亲亲福利"
 ];
 let isRun = false;
@@ -222,7 +222,7 @@ startBtn.addEventListener("click",()=>{
   if(isRun) return;
   let list = prizeList.value.trim().split("\n").filter(item=>item);
   if(list.length===0){
-    alert("请先填写抽奖名单！");
+    alert("请先填写抽奖选项！");
     return;
   }
   prizeArr = list;
