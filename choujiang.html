@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>情侣甜蜜抽奖</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:30px 15px;
+  font-family:"微软雅黑",sans-serif;
+  overflow:hidden;
+  position:relative;
+  background: linear-gradient(#1a103f,#2d1b69,#ff6b9d);
+}
+#bgCanvas{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
+}
+.title{
+  font-size:28px;
+  color:#fff;
+  font-weight:bold;
+  margin-bottom:40px;
+  text-shadow:0 2px 6px #0003;
+}
+.box{
+  width:90%;
+  max-width:350px;
+  background:rgba(255,255,255,0.92);
+  border-radius:20px;
+  padding:30px 20px;
+  text-align:center;
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
+}
+.result{
+  font-size:24px;
+  color:#e53960;
+  font-weight:bold;
+  height:60px;
+  line-height:60px;
+  margin:20px 0;
+}
+.btn{
+  width:100%;
+  height:50px;
+  line-height:50px;
+  background:#ff5788;
+  color:#fff;
+  border:none;
+  border-radius:50px;
+  font-size:18px;
+  margin-top:15px;
+}
+.btn:active{opacity:0.9;}
+.setting{
+  width:90%;
+  max-width:350px;
+  margin-top:20px;
+}
+.setting textarea{
+  width:100%;
+  height:100px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  font-size:14px;
+  background:rgba(255,255,255,0.9);
+}
+.tip{color:#fff;font-size:13px;margin-top:10px;text-shadow:0 0 3px #000;}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<h1 class="title">专属甜蜜抽奖</h1>
+<div class="box">
+  <div id="showRes" class="result">等待开奖</div>
+  <button id="startBtn" class="btn">开始抽奖</button>
+  <button id="resetBtn" class="btn" style="background:#b864a0;">重置抽奖</button>
+</div>
+<div class="setting">
+  <textarea id="prizeList" placeholder="情侣专属抽奖选项
+陪逛街
+请喝奶茶
+拥抱十分钟
+包揽家务
+红包惊喜
+亲亲福利"></textarea>
+  <p class="tip">写给对象的甜蜜奖励，微信点开超浪漫</p>
+</div>
+
+<script>
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let w,h;
+let meteors = [];
+let hearts = [];
+
+function resize(){
+  w=canvas.width=innerWidth;
+  h=canvas.height=innerHeight;
+}
+resize();
+window.addEventListener('resize',resize);
+
+// 流星雨
+class Meteor{
+  constructor(){this.reset();}
+  reset(){
+    this.x=Math.random()*w;
+    this.y=Math.random()*-h;
+    this.len=Math.random()*80+40;
+    this.speed=Math.random()*3+2;
+    this.angle=Math.PI/4;
+    this.opacity=Math.random()*0.6+0.4;
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.moveTo(this.x,this.y);
+    let endX=this.x+this.len*Math.cos(this.angle);
+    let endY=this.y+this.len*Math.sin(this.angle);
+    ctx.lineTo(endX,endY);
+    let grad=ctx.createLinearGradient(this.x,this.y,endX,endY);
+    grad.addColorStop(0,`rgba(255,220,255,${this.opacity})`);
+    grad.addColorStop(1,'rgba(255,180,220,0)');
+    ctx.strokeStyle=grad;
+    ctx.lineWidth=2;
+    ctx.stroke();
+  }
+  move(){
+    this.x+=this.speed;
+    this.y+=this.speed;
+    if(this.y>h||this.x>w) this.reset();
+  }
+}
+
+// 【优化圆润爱心】标准流畅桃心绘制
+class Heart{
+  constructor(){this.reset();}
+  reset(){
+    this.x = Math.random() * w;
+    this.y = h + 30;
+    this.r = Math.random() * 12 + 6;
+    this.speedY = Math.random() * 1.1 + 0.4;
+    this.speedX = (Math.random()-0.5)*0.6;
+    this.alpha = Math.random()*0.55+0.25;
+    this.color = ["#ff7eb9","#ff9acb","#ffc0dd","#ff68a1","#ff87b5"][Math.floor(Math.random()*5)];
+  }
+  draw(){
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    // 标准圆润爱心贝塞尔曲线
+    const x = this.x;
+    const y = this.y;
+    const r = this.r;
+    ctx.moveTo(x, y + r * 0.35);
+    // 左半边爱心
+    ctx.bezierCurveTo(
+      x - r*1.2, y - r*0.6,
+      x - r*1.2, y - r*1.1,
+      x, y - r*0.5
+    );
+    // 右半边爱心
+    ctx.bezierCurveTo(
+      x + r*1.2, y - r*1.1,
+      x + r*1.2, y - r*0.6,
+      x, y + r*0.35
+    );
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  update(){
+    this.y -= this.speedY;
+    this.x += this.speedX;
+    if(this.y < -40) this.reset();
+  }
+}
+
+for(let i=0;i<18;i++) meteors.push(new Meteor());
+for(let i=0;i<28;i++) hearts.push(new Heart());
+
+function animateBg(){
+  ctx.clearRect(0,0,w,h);
+  meteors.forEach(m=>{m.draw();m.move();});
+  hearts.forEach(item=>{item.draw();item.update();});
+  requestAnimationFrame(animateBg);
+}
+animateBg();
+
+// 抽奖逻辑不变
+let prizeArr = [
+  "陪逛街",
+  "请喝奶茶",
+  "拥抱十分钟",
+  "包揽家务",
+  "红包惊喜",
+  "亲亲福利"
+];
+let isRun = false;
+let timer = null;
+
+const showRes = document.getElementById("showRes");
+const startBtn = document.getElementById("startBtn");
+const resetBtn = document.getElementById("resetBtn");
+const prizeList = document.getElementById("prizeList");
+
+prizeList.value = prizeArr.join("\n");
+
+startBtn.addEventListener("click",()=>{
+  if(isRun) return;
+  let list = prizeList.value.trim().split("\n").filter(item=>item);
+  if(list.length===0){
+    alert("请先填写抽奖名单！");
+    return;
+  }
+  prizeArr = list;
+  isRun = true;
+  startBtn.innerText = "抽奖中...";
+
+  let index = 0;
+  timer = setInterval(()=>{
+    index = Math.floor(Math.random()*prizeArr.length);
+    showRes.innerText = prizeArr[index];
+  },80);
+
+  setTimeout(()=>{
+    clearInterval(timer);
+    let randomIdx = Math.floor(Math.random()*prizeArr.length);
+    showRes.innerText = prizeArr[randomIdx];
+    isRun = false;
+    startBtn.innerText = "开始抽奖";
+  },1500);
+})
+
+resetBtn.addEventListener("click",()=>{
+  clearInterval(timer);
+  isRun = false;
+  showRes.innerText = "等待开奖";
+  startBtn.innerText = "开始抽奖";
+})
+</script>
+</body>
+</html>
